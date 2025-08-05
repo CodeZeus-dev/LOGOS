@@ -1,0 +1,75 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url  	    = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+model User {
+  id            Int         @id @default(autoincrement())
+  email         String      @unique
+  passwordHash  String
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  documents     Document[]
+
+  @@map("users")
+}
+
+model Document {
+  id         Int        @id @default(autoincrement())
+  userId     Int        @map("user_id")
+  filename   String
+  status     Status     @default(UPLOADED)
+  uploadDate DateTime   @default(now()) @map("upload_date")
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @updatedAt @map("updated_at")
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  textData   TextData? 
+  summary    Summary?
+
+  @@index([userId])
+  @@index([status])
+  @@index([uploadDate])
+  @@map("documents")
+}
+
+model TextData {
+  id            Int       @id @default(autoincrement())
+  documentId    Int       @unique @map("document_id")
+  extractedText String    @map("extracted_text") @db.Text
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  document      Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("text_data")
+}
+
+model Summary {
+  id          Int       @id @default(autoincrement())
+  documentId  Int       @unique @map("document_id")
+  summaryText String    @map("summary_text") @db.Text
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  document    Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("summaries")
+}
+
+enum Status {
+  UPLOADED
+  PROCESSING
+  DONE
+  ERROR
+}
