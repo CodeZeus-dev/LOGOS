@@ -10,9 +10,9 @@ export class UsersService {
   constructor(private readonly databaseService: DatabaseService){}
 
   async create(createUserDto: CreateUserDto) {
-    const hashedPassword = await PasswordHelper.hash(createUserDto.passwordHash);
+    const hashedPassword = await PasswordHelper.hash(createUserDto.password);
     const user = {
-      ...createUserDto,
+      email: createUserDto.email,
       passwordHash: hashedPassword,
     }
 
