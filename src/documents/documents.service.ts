@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from 'generated/prisma';
 import { DatabaseService } from 'src/database/database.service';
 
@@ -16,12 +16,23 @@ export class DocumentsService {
     return this.databaseService.document.findMany()
   }
 
-  async findOne(id: number) {
-    return this.databaseService.document.findUnique({
+  async findOne(
+    id: number, 
+    options?: {textData?: boolean, summary?: boolean}
+  ) {
+    const document = await this.databaseService.document.findUnique({
       where: {
         id,
+      },
+      include: {
+        textData: options?.textData ?? false,
+        summary: options?.summary ?? false,
       }
-    })
+    });
+
+    if (!document) throw new NotFoundException("No document found");
+    
+    return document;
   }
 
   async update(id: number, updateDocumentDto: Prisma.DocumentUpdateInput) {
